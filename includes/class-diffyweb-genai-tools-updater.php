@@ -39,13 +39,13 @@ class DiffyWeb_GenAI_Tools_Updater {
 
         $remote_info = $this->get_remote_info();
 
-        if ( $remote_info && version_compare( $this->plugin_data['Version'], $remote_info->version, '<' ) ) {
+        if ( $remote_info && version_compare( $this->plugin_data['Version'], $remote_info['version'], '<' ) ) {
             $transient->response[ $this->slug ] = (object) [
                 'slug'        => basename($this->slug, '.php'),
                 'plugin'      => $this->slug,
-                'new_version' => $remote_info->version,
-                'url'         => $remote_info->sections['description'] ?? '',
-                'package'     => $remote_info->download_url,
+                'new_version' => $remote_info['version'],
+                'url'         => $remote_info['sections']['description'] ?? '',
+                'package'     => $remote_info['download_url'],
             ];
         }
 
@@ -57,6 +57,6 @@ class DiffyWeb_GenAI_Tools_Updater {
         if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
             return false;
         }
-        return json_decode( wp_remote_retrieve_body( $response ) );
+        return json_decode( wp_remote_retrieve_body( $response ), true );
     }
 }
