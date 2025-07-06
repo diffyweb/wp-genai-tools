@@ -1,14 +1,14 @@
 {
   "name": "GenAI Tools",
   "slug": "wp-genai-tools",
-  "version": "2.7.1",
-  "download_url": "https://github.com/diffyweb/wp-genai-tools/releases/download/v2.7.1/wp-genai-tools.zip",
+  "version": "2.7.2",
+  "download_url": "https://github.com/diffyweb/wp-genai-tools/releases/download/v2.7.2/wp-genai-tools.zip",
   "requires": "6.0",
   "tested": "6.5",
   "requires_php": "7.4",
   "last_updated": "2024-07-07 18:00:00",
   "sections": {
     "description": "A toolkit for integrating various Generative AI services into the WordPress content workflow.",
-    "changelog": "<h4>v2.7.1</h4><ul><li>fix(multisite): Add full support for WordPress multisite networks, ensuring the updater works correctly.</li></ul><h4>v2.7.0</h4><ul><li>refactor(core): Separate AI providers into dedicated classes for better maintainability.</li><li>feat(openai): Integrate DALL-E 3 as an image generation provider.</li></ul><h4>v2.6.2</h4><ul><li>fix(updater): Correct slug generation and implement plugins_api filter to resolve 'plugin not found' errors during update.</li></ul><h4>v2.6.1</h4><ul><li>fix(updater): Resolve fatal error and translation loading issues during update checks.</li></ul><h4>v2.6.0</h4><ul><li>feat(a11y): Automatically set alt text for generated images using the post title.</li></ul><h4>v2.5.0</h4><ul><li>refactor(core): Removed all image optimization functionality to focus on core AI features.</li></ul>"
+    "changelog": "<h4>v2.7.2</h4><ul><li>fix(core): Prevent fatal error on activation by deferring updater and multisite checks to the `admin_init` hook.</li></ul><h4>v2.7.1</h4><ul><li>fix(multisite): Add full support for WordPress multisite networks, ensuring the updater works correctly.</li></ul><h4>v2.7.0</h4><ul><li>refactor(core): Separate AI providers into dedicated classes for better maintainability.</li><li>feat(openai): Integrate DALL-E 3 as an image generation provider.</li></ul><h4>v2.6.2</h4><ul><li>fix(updater): Correct slug generation and implement plugins_api filter to resolve 'plugin not found' errors during update.</li></ul><h4>v2.6.1</h4><ul><li>fix(updater): Resolve fatal error and translation loading issues during update checks.</li></ul><h4>v2.6.0</h4><ul><li>feat(a11y): Automatically set alt text for generated images using the post title.</li></ul><h4>v2.5.0</h4><ul><li>refactor(core): Removed all image optimization functionality to focus on core AI features.</li></ul>"
   }
 }

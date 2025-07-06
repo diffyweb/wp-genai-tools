@@ -23,7 +23,7 @@ if ( ! defined( 'WPINC' ) ) {
 final class DiffyWeb_GenAI_Tools {
 
     private static $_instance = null;
-    public $version = '2.7.1';
+    public $version = '2.7.2';
 
     public static function instance() {
         if ( is_null( self::$_instance ) ) {
@@ -33,6 +33,13 @@ final class DiffyWeb_GenAI_Tools {
     }
 
     private function __construct() {
+        // All of this plugin's functionality is for the admin area.
+        // We check is_admin() to prevent any code from running on the frontend,
+        // which avoids fatal errors if admin-only functions are called.
+        if ( ! is_admin() ) {
+            return;
+        }
+
         if ( is_multisite() ) {
             add_action( 'network_admin_menu', [ $this, 'add_admin_menu' ] );
         } else {
@@ -43,12 +50,23 @@ final class DiffyWeb_GenAI_Tools {
         add_action( 'add_meta_boxes', [ $this, 'add_generation_meta_box' ] );
         add_action( 'wp_ajax_diffyweb_genai_generate_image', [ $this, 'handle_ajax_image_generation' ] );
 
+        // Defer updater initialization to a hook where all admin functions are available.
+        add_action( 'admin_init', [ $this, 'initialize_updater_or_notice' ] );
+    }
+
+    /**
+     * Initializes the updater or shows a network activation notice.
+     * This is hooked to admin_init to ensure all necessary functions are loaded.
+     * @since 2.7.1
+     */
+    public function initialize_updater_or_notice() {
         // The updater should only run when the plugin is active in the appropriate context.
         // For multisite, this means it must be network-activated.
         if ( ! is_multisite() || $this->is_network_activated() ) {
             $this->initialize_updater();
         } else {
             add_action( 'admin_notices', [ $this, 'render_network_activation_notice' ] );
+            add_action( 'network_admin_notices', [ $this, 'render_network_activation_notice' ] );
         }
     }
 
@@ -286,9 +304,8 @@ final class DiffyWeb_GenAI_Tools {
      * @return bool
      */
     private function is_network_activated() {
-        if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
-            require_once ABSPATH . '/wp-admin/includes/plugin.php';
-        }
+        // This method is now only called from an admin_init hook,
+        // so is_plugin_active_for_network() is guaranteed to exist.
         return is_plugin_active_for_network( plugin_basename( DIFFYWEB_GENAI_TOOLS_FILE ) );
     }
 }
