@@ -328,6 +328,11 @@ final class DiffyWeb_GenAI_Tools {
             require_once( ABSPATH . 'wp-admin/includes/image.php' );
             wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $upload['file'] ) );
             set_post_thumbnail( $post_id, $attachment_id );
+
+            // Set the alt text for the attachment.
+            $alt_text = $post_title . ' featured image.';
+            update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
+
             return [
                 'status'        => 'success',
                 'attachment_id' => $attachment_id,
