@@ -23,7 +23,7 @@ if ( ! defined( 'WPINC' ) ) {
 final class DiffyWeb_GenAI_Tools {
 
     private static $_instance = null;
-    public $version = '2.1.0';
+    public $version = '2.2.0';
 
     public static function instance() {
         if ( is_null( self::$_instance ) ) {
@@ -62,15 +62,34 @@ final class DiffyWeb_GenAI_Tools {
      * Render the settings page with a tabbed interface and instructions.
      */
     public function render_settings_page() {
-        $active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'gemini_settings';
+        $active_tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'gemini_settings'; // @phpcs:ignore WordPress.Security.NonceVerification.Recommended
         ?>
         <div class="wrap">
             <h1>GenAI Tools Settings</h1>
+
+            <?php
+            $pngquant_enabled = get_option( 'diffyweb_genai_tools_pngquant_enabled' );
+            if ( $pngquant_enabled ) {
+                $pngquant_status = $this->check_pngquant_availability();
+                if ( true !== $pngquant_status ) {
+                    ?>
+                    <div class="notice notice-warning">
+                        <p>
+                            <strong><?php esc_html_e( 'Optimization Prerequisite Missing:', 'diffyweb-genai-tools' ); ?></strong>
+                            <?php echo esc_html( $pngquant_status ); ?>
+                        </p>
+                    </div>
+                    <?php
+                }
+            }
+            ?>
+
             <p>Configure API keys for various Generative AI services.</p>
 
             <h2 class="nav-tab-wrapper">
                 <a href="?page=diffyweb-genai-tools&tab=gemini_settings" class="nav-tab <?php echo $active_tab == 'gemini_settings' ? 'nav-tab-active' : ''; ?>">Gemini</a>
                 <a href="?page=diffyweb-genai-tools&tab=openai_settings" class="nav-tab <?php echo $active_tab == 'openai_settings' ? 'nav-tab-active' : ''; ?>">OpenAI (DALL-E)</a>
+                <a href="?page=diffyweb-genai-tools&tab=optimization_settings" class="nav-tab <?php echo $active_tab == 'optimization_settings' ? 'nav-tab-active' : ''; ?>"><?php esc_html_e( 'Optimization', 'diffyweb-genai-tools' ); ?></a>
             </h2>
 
             <form action="options.php" method="post">
@@ -81,6 +100,9 @@ final class DiffyWeb_GenAI_Tools {
                 } elseif ( $active_tab == 'openai_settings' ) {
                     settings_fields( 'diffyweb_genai_tools_openai_options' );
                     do_settings_sections( 'diffyweb-genai-tools-openai' );
+                } elseif ( 'optimization_settings' === $active_tab ) {
+                    settings_fields( 'diffyweb_genai_tools_optimization_options' );
+                    do_settings_sections( 'diffyweb-genai-tools-optimization' );
                 }
                 submit_button( 'Save Settings' );
                 ?>
@@ -88,7 +110,7 @@ final class DiffyWeb_GenAI_Tools {
             
             <hr>
             
-            <h2><span class="dashicons dashicons-info-outline"></span> API Key Instructions</h2>
+            <h2><span class="dashicons dashicons-info-outline"></span> Instructions</h2>
             
             <?php if ( $active_tab == 'gemini_settings' ) : ?>
             <details open>
@@ -132,6 +154,21 @@ final class DiffyWeb_GenAI_Tools {
                 </div>
             </details>
             <?php endif; ?>
+
+            <?php if ( 'optimization_settings' === $active_tab ) : ?>
+            <details open>
+                <summary><strong>PNGQuant Optimization Instructions</strong></summary>
+                <div style="padding-left: 20px; border-left: 2px solid #ccc; margin-top: 10px; max-width: 800px;">
+                    <p>PNGQuant is a command-line utility for lossy compression of PNG images. It can significantly reduce file sizes while maintaining high visual quality.</p>
+                    <p>To use this feature, <code>pngquant</code> must be installed on your server and accessible in the system's PATH. The plugin also requires the <code>exec()</code> PHP function to be enabled.</p>
+                    <p><strong>Installation on Debian/Ubuntu:</strong></p>
+                    <pre><code>sudo apt-get update && sudo apt-get install pngquant</code></pre>
+                    <p><strong>Installation on CentOS/RHEL:</strong></p>
+                    <pre><code>sudo yum install pngquant</code></pre>
+                    <p>After installation, you can enable the optimization feature above. The plugin will automatically attempt to use it for generated PNG images.</p>
+                </div>
+            </details>
+            <?php endif; ?>
         </div>
         <?php
     }
@@ -140,16 +177,20 @@ final class DiffyWeb_GenAI_Tools {
      * Register all settings for the different services.
      */
     public function register_settings() {
+        // Gemini Settings.
         register_setting( 'diffyweb_genai_tools_gemini_options', 'diffyweb_genai_tools_gemini_api_key', 'sanitize_text_field' );
         add_settings_section( 'diffyweb_genai_gemini_api_section', 'Google Gemini API Settings', null, 'diffyweb-genai-tools-gemini' );
         add_settings_field( 'diffyweb_genai_gemini_api_key_field', 'Gemini API Key', [ $this, 'render_api_key_field' ], 'diffyweb-genai-tools-gemini', 'diffyweb_genai_gemini_api_section', [ 'id' => 'diffyweb_genai_tools_gemini_api_key' ] );
 
-        add_settings_field( 'diffyweb_genai_pngquant_enabled_field', 'Enable PNGQuant Optimization', [ $this, 'render_pngquant_enabled_field' ], 'diffyweb-genai-tools-gemini', 'diffyweb_genai_gemini_api_section' );
-        register_setting( 'diffyweb_genai_tools_gemini_options', 'diffyweb_genai_tools_pngquant_enabled', 'absint' );
-
+        // OpenAI Settings.
         register_setting( 'diffyweb_genai_tools_openai_options', 'diffyweb_genai_tools_openai_api_key', 'sanitize_text_field' );
         add_settings_section( 'diffyweb_genai_openai_api_section', 'OpenAI API Settings', null, 'diffyweb-genai-tools-openai' );
         add_settings_field( 'diffyweb_genai_openai_api_key_field', 'OpenAI API Key', [ $this, 'render_api_key_field' ], 'diffyweb-genai-tools-openai', 'diffyweb_genai_openai_api_section', [ 'id' => 'diffyweb_genai_tools_openai_api_key' ] );
+
+        // Optimization Settings.
+        register_setting( 'diffyweb_genai_tools_optimization_options', 'diffyweb_genai_tools_pngquant_enabled', 'absint' );
+        add_settings_section( 'diffyweb_genai_optimization_section', 'PNG Optimization Settings', null, 'diffyweb-genai-tools-optimization' );
+        add_settings_field( 'diffyweb_genai_pngquant_enabled_field', 'Enable PNGQuant Optimization', [ $this, 'render_pngquant_enabled_field' ], 'diffyweb-genai-tools-optimization', 'diffyweb_genai_optimization_section' );
     }
 
     public function render_api_key_field( $args ) {
@@ -309,6 +350,28 @@ final class DiffyWeb_GenAI_Tools {
         }
 
         return $this->upload_and_set_featured_image( $base64_image_data, $post_id, $post_title );
+    }
+
+    /**
+     * Checks for pngquant availability and returns status.
+     *
+     * @return true|string True if available, error string otherwise.
+     */
+    private function check_pngquant_availability() {
+        // Check if exec is available on the server.
+        if ( ! function_exists( 'exec' ) || false !== strpos( ini_get( 'disable_functions' ), 'exec' ) ) {
+            return __( 'The `exec()` PHP function is disabled on this server. PNG optimization is not available.', 'diffyweb-genai-tools' );
+        }
+
+        // Check if pngquant is installed and in the system's PATH.
+        // The @ suppresses errors if the command doesn't exist.
+        // `2>&1` redirects stderr to stdout to capture potential errors.
+        @exec( 'command -v pngquant 2>&1', $output, $exit_code );
+        if ( $exit_code !== 0 ) {
+            return __( 'The pngquant utility could not be found on your server. PNG optimization is not available.', 'diffyweb-genai-tools' );
+        }
+
+        return true;
     }
 
     /**
