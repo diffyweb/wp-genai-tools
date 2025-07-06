@@ -23,7 +23,7 @@ if ( ! defined( 'WPINC' ) ) {
 final class DiffyWeb_GenAI_Tools {
 
     private static $_instance = null;
-    public $version = '2.6.2';
+    public $version = '2.7.0';
 
     public static function instance() {
         if ( is_null( self::$_instance ) ) {
@@ -219,191 +219,31 @@ final class DiffyWeb_GenAI_Tools {
             return;
         }
 
-        $post_id = intval( $_POST['post_id'] );
-        $provider = isset( $_POST['provider'] ) ? sanitize_key( $_POST['provider'] ) : 'gemini';
+        $post_id       = intval( $_POST['post_id'] );
+        $provider_slug = isset( $_POST['provider'] ) ? sanitize_key( $_POST['provider'] ) : 'gemini';
         
-        $result = [
-            'status'  => 'error',
-            'message' => 'Invalid provider selected.',
-        ];
-
-        if ( $provider === 'gemini' ) {
-            $result = $this->generate_with_gemini( $post_id );
-        } elseif ( $provider === 'openai' ) {
-            $result = $this->generate_with_openai( $post_id );
+        $provider = null;
+        if ( 'gemini' === $provider_slug ) {
+            $provider = new DiffyWeb_GenAI_Gemini_Provider();
+        } elseif ( 'openai' === $provider_slug ) {
+            $provider = new DiffyWeb_GenAI_OpenAI_Provider();
         }
+
+        if ( ! $provider instanceof DiffyWeb_GenAI_Provider_Interface ) {
+            wp_send_json_error( array( 'message' => 'Invalid provider selected.' ) );
+            return;
+        }
+
+        $result = $provider->generate( $post_id );
 
         if ( 'success' === ( $result['status'] ?? 'error' ) ) {
-            wp_send_json_success( [
+            wp_send_json_success( array(
                 'message'       => 'Featured image generated and set!',
                 'attachment_id' => $result['attachment_id'],
-            ] );
+            ) );
         } else {
             $error_message = $result['message'] ?? 'An unknown error occurred.';
-            wp_send_json_error( [ 'message' => $error_message ] );
-        }
-    }
-
-    private function generate_with_gemini( $post_id ) {
-        $api_key = get_option( 'diffyweb_genai_tools_gemini_api_key' );
-        if ( empty( $api_key ) ) {
-            return [ 'status' => 'error', 'message' => 'Gemini API key is not set.' ];
-        }
-
-        $post = get_post( $post_id );
-        $post_title = $post->post_title;
-        $post_content = wp_strip_all_tags( $post->post_content );
-        $post_tags = get_the_tags( $post_id );
-        
-        $keywords = array();
-        if ( $post_tags ) {
-            foreach ( $post_tags as $tag ) {
-                $keywords[] = $tag->name;
-            }
-        }
-        $keywords_string = implode( ', ', $keywords );
-
-        $prompt = "Task: Generate a single photorealistic image. Do not return text. The image should be a high-quality featured image for a blog post, visually compelling and relevant to the content. Do not include any text, logos, or watermarks in the image.\n\nPOST TITLE: {$post_title}\n\nKEYWORDS: {$keywords_string}\n\nCONTENT SUMMARY: " . substr( $post_content, 0, 1000 ) . "...";
-
-        $api_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' . $api_key;
-        $request_body = array(
-            'contents' => [ [ 'parts' => [ [ 'text' => $prompt ] ] ] ],
-            'generationConfig' => [ 'responseModalities' => [ 'TEXT', 'IMAGE' ] ],
-        );
-
-        $response = wp_remote_post( $api_url, array(
-            'method'    => 'POST',
-            'headers'   => [ 'Content-Type' => 'application/json' ],
-            'body'      => json_encode( $request_body ),
-            'timeout'   => 60,
-        ) );
-
-        if ( is_wp_error( $response ) ) {
-            return [ 'status' => 'error', 'message' => 'WordPress HTTP Error: ' . $response->get_error_message() ];
-        }
-
-        $response_code = wp_remote_retrieve_response_code( $response );
-        if ( 200 !== $response_code ) {
-            $response_body = wp_remote_retrieve_body( $response );
-            $api_error_details = json_decode( $response_body, true );
-            $specific_message = $api_error_details['error']['message'] ?? 'Could not parse error from API.';
-            return [ 'status' => 'error', 'message' => 'Gemini API Error (Code ' . $response_code . '): ' . $specific_message ];
-        }
-
-        $response_body = json_decode( wp_remote_retrieve_body( $response ), true );
-        $base64_image_data = null;
-        if ( isset( $response_body['candidates'][0]['content']['parts'] ) ) {
-            foreach ( $response_body['candidates'][0]['content']['parts'] as $part ) {
-                if ( isset( $part['inlineData']['data'] ) ) {
-                    $base64_image_data = $part['inlineData']['data'];
-                    break;
-                }
-            }
-        }
-
-        if ( ! $base64_image_data ) {
-            error_log( 'Diffyweb GenAI Tools Plugin Error: No image data found in response. Full response: ' . print_r( $response_body, true ) );
-            return [ 'status' => 'error', 'message' => 'API returned success, but no image data was found. The model may have returned text instead. Check server logs for the full API response.' ];
-        }
-
-        return $this->upload_and_set_featured_image( $base64_image_data, $post_id, $post_title );
-    }
-
-    private function generate_with_openai( $post_id ) {
-        $api_key = get_option( 'diffyweb_genai_tools_openai_api_key' );
-        if ( empty( $api_key ) ) {
-            return [ 'status' => 'error', 'message' => 'OpenAI API key is not set.' ];
-        }
-
-        $post = get_post( $post_id );
-        $post_title = $post->post_title;
-        $post_content = wp_strip_all_tags( $post->post_content );
-        $post_tags = get_the_tags( $post_id );
-        
-        $keywords = array();
-        if ( $post_tags ) {
-            foreach ( $post_tags as $tag ) {
-                $keywords[] = $tag->name;
-            }
-        }
-        $keywords_string = implode( ', ', $keywords );
-
-        $prompt = "Generate a single, photorealistic, high-quality featured image for a blog post. The image must be visually compelling, relevant to the content, and contain no text, logos, or watermarks. The style should be suitable for a professional blog.\n\nPOST TITLE: {$post_title}\n\nKEYWORDS: {$keywords_string}\n\nCONTENT SUMMARY: " . substr( $post_content, 0, 1000 ) . "...";
-
-        $api_url = 'https://api.openai.com/v1/images/generations';
-        $request_body = array(
-            'model'           => 'dall-e-3',
-            'prompt'          => $prompt,
-            'n'               => 1,
-            'size'            => '1024x1024',
-            'response_format' => 'b64_json',
-        );
-
-        $response = wp_remote_post( $api_url, array(
-            'method'    => 'POST',
-            'headers'   => [
-                'Content-Type'  => 'application/json',
-                'Authorization' => 'Bearer ' . $api_key,
-            ],
-            'body'      => json_encode( $request_body ),
-            'timeout'   => 90, // DALL-E 3 can be slower, so a longer timeout is safer.
-        ) );
-
-        if ( is_wp_error( $response ) ) {
-            return [ 'status' => 'error', 'message' => 'WordPress HTTP Error: ' . $response->get_error_message() ];
-        }
-
-        $response_code = wp_remote_retrieve_response_code( $response );
-        $response_body = json_decode( wp_remote_retrieve_body( $response ), true );
-
-        if ( 200 !== $response_code ) {
-            $specific_message = $response_body['error']['message'] ?? 'Could not parse error from API.';
-            return [ 'status' => 'error', 'message' => 'OpenAI API Error (Code ' . $response_code . '): ' . $specific_message ];
-        }
-
-        $base64_image_data = $response_body['data'][0]['b64_json'] ?? null;
-
-        if ( ! $base64_image_data ) {
-            error_log( 'Diffyweb GenAI Tools Plugin Error: No image data found in OpenAI response. Full response: ' . print_r( $response_body, true ) );
-            return [ 'status' => 'error', 'message' => 'API returned success, but no image data was found. Check server logs for the full API response.' ];
-        }
-
-        return $this->upload_and_set_featured_image( $base64_image_data, $post_id, $post_title );
-    }
-
-
-    private function upload_and_set_featured_image( $base64_image_data, $post_id, $post_title ) {
-        $image_data = base64_decode( $base64_image_data );
-        $filename = sanitize_title( $post_title ) . '-' . time() . '.png';
-        $upload = wp_upload_bits( $filename, null, $image_data );
-
-        if ( ! empty( $upload['error'] ) ) {
-            return [ 'status' => 'error', 'message' => 'Could not save image to media library.' ];
-        }
-
-        $attachment = array(
-            'post_mime_type' => $upload['type'],
-            'post_title'     => sanitize_text_field( $post_title ),
-            'post_content'   => '',
-            'post_status'    => 'inherit',
-        );
-        $attachment_id = wp_insert_attachment( $attachment, $upload['file'], $post_id );
-
-        if ( ! is_wp_error( $attachment_id ) ) {
-            require_once( ABSPATH . 'wp-admin/includes/image.php' );
-            wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $upload['file'] ) );
-            set_post_thumbnail( $post_id, $attachment_id );
-
-            // Set the alt text for the attachment.
-            $alt_text = $post_title . ' featured image.';
-            update_post_meta( $attachment_id, '_wp_attachment_image_alt', $alt_text );
-
-            return [
-                'status'        => 'success',
-                'attachment_id' => $attachment_id,
-            ];
-        } else {
-            return [ 'status' => 'error', 'message' => 'Could not create attachment in WordPress.' ];
+            wp_send_json_error( array( 'message' => $error_message ) );
         }
     }
 }
