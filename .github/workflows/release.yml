@@ -27,7 +27,8 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: "Version ${{ github.ref_name }}"
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./wp-genai-tools.zip
           asset_name: wp-genai-tools.zip
           asset_content_type: application/zip
+          draft: false
+          prerelease: false
