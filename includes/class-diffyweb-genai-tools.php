@@ -23,7 +23,7 @@ if ( ! defined( 'WPINC' ) ) {
 final class DiffyWeb_GenAI_Tools {
 
     private static $_instance = null;
-    public $version = '2.7.0';
+    public $version = '2.7.1';
 
     public static function instance() {
         if ( is_null( self::$_instance ) ) {
@@ -33,12 +33,23 @@ final class DiffyWeb_GenAI_Tools {
     }
 
     private function __construct() {
-        add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
+        if ( is_multisite() ) {
+            add_action( 'network_admin_menu', [ $this, 'add_admin_menu' ] );
+        } else {
+            add_action( 'admin_menu', [ $this, 'add_admin_menu' ] );
+        }
+
         add_action( 'admin_init', [ $this, 'register_settings' ] );
         add_action( 'add_meta_boxes', [ $this, 'add_generation_meta_box' ] );
         add_action( 'wp_ajax_diffyweb_genai_generate_image', [ $this, 'handle_ajax_image_generation' ] );
-        
-        $this->initialize_updater();
+
+        // The updater should only run when the plugin is active in the appropriate context.
+        // For multisite, this means it must be network-activated.
+        if ( ! is_multisite() || $this->is_network_activated() ) {
+            $this->initialize_updater();
+        } else {
+            add_action( 'admin_notices', [ $this, 'render_network_activation_notice' ] );
+        }
     }
 
     /**
@@ -55,7 +66,18 @@ final class DiffyWeb_GenAI_Tools {
      * Add the main settings page.
      */
     public function add_admin_menu() {
-        add_options_page( 'GenAI Tools Settings', 'GenAI Tools', 'manage_options', 'diffyweb-genai-tools', [ $this, 'render_settings_page' ] );
+        if ( is_multisite() ) {
+            add_submenu_page(
+                'settings.php', // Parent slug for network settings.
+                'GenAI Tools Settings',
+                'GenAI Tools',
+                'manage_network_options',
+                'diffyweb-genai-tools',
+                [ $this, 'render_settings_page' ]
+            );
+        } else {
+            add_options_page( 'GenAI Tools Settings', 'GenAI Tools', 'manage_options', 'diffyweb-genai-tools', [ $this, 'render_settings_page' ] );
+        }
     }
 
     /**
@@ -157,6 +179,15 @@ final class DiffyWeb_GenAI_Tools {
         echo '<input type="password" name="' . esc_attr( $args['id'] ) . '" value="' . esc_attr( $api_key ) . '" size="50">';
     }
 
+    public function render_network_activation_notice() {
+        ?>
+        <div class="notice notice-error">
+            <p>
+                <?php esc_html_e( 'GenAI Tools is installed on a multisite network but is not network-activated. The updater and other features may not work correctly. Please network-activate the plugin.', 'diffyweb-genai-tools' ); ?>
+            </p>
+        </div>
+        <?php
+    }
     public function add_generation_meta_box() {
         add_meta_box( 'diffyweb_genai_tools_meta_box', 'GenAI Tools', [ $this, 'render_meta_box_content' ], 'post', 'side', 'high' );
     }
@@ -224,9 +255,11 @@ final class DiffyWeb_GenAI_Tools {
         
         $provider = null;
         if ( 'gemini' === $provider_slug ) {
-            $provider = new DiffyWeb_GenAI_Gemini_Provider();
+            $api_key  = is_multisite() ? get_site_option( 'diffyweb_genai_tools_gemini_api_key' ) : get_option( 'diffyweb_genai_tools_gemini_api_key' );
+            $provider = new DiffyWeb_GenAI_Gemini_Provider( $api_key );
         } elseif ( 'openai' === $provider_slug ) {
-            $provider = new DiffyWeb_GenAI_OpenAI_Provider();
+            $api_key  = is_multisite() ? get_site_option( 'diffyweb_genai_tools_openai_api_key' ) : get_option( 'diffyweb_genai_tools_openai_api_key' );
+            $provider = new DiffyWeb_GenAI_OpenAI_Provider( $api_key );
         }
 
         if ( ! $provider instanceof DiffyWeb_GenAI_Provider_Interface ) {
@@ -245,5 +278,17 @@ final class DiffyWeb_GenAI_Tools {
             $error_message = $result['message'] ?? 'An unknown error occurred.';
             wp_send_json_error( array( 'message' => $error_message ) );
         }
+    }
+
+    /**
+     * Check if the plugin is network-activated on a multisite install.
+     *
+     * @return bool
+     */
+    private function is_network_activated() {
+        if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+            require_once ABSPATH . '/wp-admin/includes/plugin.php';
+        }
+        return is_plugin_active_for_network( plugin_basename( DIFFYWEB_GENAI_TOOLS_FILE ) );
     }
 }

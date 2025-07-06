@@ -17,6 +17,18 @@ if ( ! defined( 'WPINC' ) ) {
 class DiffyWeb_GenAI_OpenAI_Provider implements DiffyWeb_GenAI_Provider_Interface {
 
 	/**
+	 * The API key for the provider.
+	 *
+	 * @since 2.7.0
+	 * @var string
+	 */
+	private $api_key;
+
+	public function __construct( $api_key ) {
+		$this->api_key = $api_key;
+	}
+
+	/**
 	 * Generates an image using the OpenAI API.
 	 *
 	 * @since 2.7.0
@@ -24,8 +36,7 @@ class DiffyWeb_GenAI_OpenAI_Provider implements DiffyWeb_GenAI_Provider_Interfac
 	 * @return array An array containing the status and message/data.
 	 */
 	public function generate( $post_id ) {
-		$api_key = get_option( 'diffyweb_genai_tools_openai_api_key' );
-		if ( empty( $api_key ) ) {
+		if ( empty( $this->api_key ) ) {
 			return array(
 				'status'  => 'error',
 				'message' => 'OpenAI API key is not set.',
@@ -62,7 +73,7 @@ class DiffyWeb_GenAI_OpenAI_Provider implements DiffyWeb_GenAI_Provider_Interfac
 				'method'  => 'POST',
 				'headers' => array(
 					'Content-Type'  => 'application/json',
-					'Authorization' => 'Bearer ' . $api_key,
+					'Authorization' => 'Bearer ' . $this->api_key,
 				),
 				'body'    => json_encode( $request_body ),
 				'timeout' => 90, // DALL-E 3 can be slower, so a longer timeout is safer.

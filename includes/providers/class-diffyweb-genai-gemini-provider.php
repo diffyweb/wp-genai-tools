@@ -17,6 +17,18 @@ if ( ! defined( 'WPINC' ) ) {
 class DiffyWeb_GenAI_Gemini_Provider implements DiffyWeb_GenAI_Provider_Interface {
 
 	/**
+	 * The API key for the provider.
+	 *
+	 * @since 2.7.0
+	 * @var string
+	 */
+	private $api_key;
+
+	public function __construct( $api_key ) {
+		$this->api_key = $api_key;
+	}
+
+	/**
 	 * Generates an image using the Gemini API.
 	 *
 	 * @since 2.7.0
@@ -24,8 +36,7 @@ class DiffyWeb_GenAI_Gemini_Provider implements DiffyWeb_GenAI_Provider_Interfac
 	 * @return array An array containing the status and message/data.
 	 */
 	public function generate( $post_id ) {
-		$api_key = get_option( 'diffyweb_genai_tools_gemini_api_key' );
-		if ( empty( $api_key ) ) {
+		if ( empty( $this->api_key ) ) {
 			return array(
 				'status'  => 'error',
 				'message' => 'Gemini API key is not set.',
@@ -47,7 +58,7 @@ class DiffyWeb_GenAI_Gemini_Provider implements DiffyWeb_GenAI_Provider_Interfac
 
 		$prompt = "Task: Generate a single photorealistic image. Do not return text. The image should be a high-quality featured image for a blog post, visually compelling and relevant to the content. Do not include any text, logos, or watermarks in the image.\n\nPOST TITLE: {$post_title}\n\nKEYWORDS: {$keywords_string}\n\nCONTENT SUMMARY: " . substr( $post_content, 0, 1000 ) . '...';
 
-		$api_url      = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' . $api_key;
+		$api_url      = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' . $this->api_key;
 		$request_body = array(
 			'contents'         => array( array( 'parts' => array( array( 'text' => $prompt ) ) ) ),
 			'generationConfig' => array( 'responseModalities' => array( 'TEXT', 'IMAGE' ) ),
