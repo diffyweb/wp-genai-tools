@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       GenAI Tools
  * Description:       A toolkit for integrating various Generative AI services (like Gemini, DALL-E, etc.) into the WordPress content workflow.
- * Version:           2.6.0
+ * Version:           2.6.1
  * Author:            Diffyweb
  * Author URI:        https://diffyweb.com/
  * License:           GPL-2.0-or-later
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
  *
  * @since 2.1.0
  */
-define( 'DIFFYWEB_GENAI_TOOLS_VERSION', '2.6.0' );
+define( 'DIFFYWEB_GENAI_TOOLS_VERSION', '2.6.1' );
 
 /**
  * The full path to the main plugin file, used by the updater.

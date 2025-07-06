@@ -26,7 +26,6 @@ class DiffyWeb_GenAI_Tools_Updater {
     public function __construct( $file, $update_url ) {
         $this->file = $file;
         $this->update_url = $update_url;
-        $this->plugin_data = get_plugin_data( $this->file );
         $this->slug = plugin_basename( $this->file );
 
         add_filter( 'pre_set_site_transient_update_plugins', [ $this, 'check_for_update' ] );
@@ -35,6 +34,11 @@ class DiffyWeb_GenAI_Tools_Updater {
     public function check_for_update( $transient ) {
         if ( empty( $transient->checked ) ) {
             return $transient;
+        }
+
+        // Defer getting plugin data until it's needed to prevent running too early.
+        if ( ! isset( $this->plugin_data ) ) {
+            $this->plugin_data = get_plugin_data( $this->file );
         }
 
         $remote_info = $this->get_remote_info();
