@@ -1,7 +1,7 @@
 {
   "name": "GenAI Tools",
   "slug": "wp-genai-tools",
-  "version": "2.0.0",
+  "version": "2.0.5",
   "download_url": "https://github.com/diffyweb/wp-genai-tools/raw/main/wp-genai-tools.zip",
   "requires": "6.0",
   "tested": "6.5",
