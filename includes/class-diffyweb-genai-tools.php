@@ -23,7 +23,7 @@ if ( ! defined( 'WPINC' ) ) {
 final class DiffyWeb_GenAI_Tools {
 
     private static $_instance = null;
-    public $version = '2.6.1';
+    public $version = '2.6.2';
 
     public static function instance() {
         if ( is_null( self::$_instance ) ) {

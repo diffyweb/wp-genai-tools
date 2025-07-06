@@ -1,0 +1,5 @@
+.distignore
+.git
+.github
+.gitignore
+README.ai.md

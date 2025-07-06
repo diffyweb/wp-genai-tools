@@ -1,0 +1,33 @@
+name: Create Plugin Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create release zip
+        run: |
+          mkdir -p build/wp-genai-tools
+          rsync -rc --exclude-from=.distignore ./ build/wp-genai-tools/
+          cd build
+          zip -r ../wp-genai-tools.zip wp-genai-tools
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: "Version ${{ github.ref_name }}"
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./wp-genai-tools.zip
+          asset_name: wp-genai-tools.zip
+          asset_content_type: application/zip
