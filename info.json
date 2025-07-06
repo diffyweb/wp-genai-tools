@@ -1,0 +1,14 @@
+{
+  "name": "GenAI Tools",
+  "slug": "wp-genai-tools",
+  "version": "2.0.0",
+  "download_url": "https://github.com/diffyweb/wp-genai-tools/raw/main/wp-genai-tools.zip",
+  "requires": "6.0",
+  "tested": "6.5",
+  "requires_php": "7.4",
+  "last_updated": "2025-07-06 06:00:00",
+  "sections": {
+    "description": "A toolkit for integrating various Generative AI services into the WordPress content workflow.",
+    "changelog": "<h4>v2.0.0</h4><ul><li>Refactored into an extensible 'kit' architecture.</li><li>Added tabbed settings page for multiple AI providers.</li><li>Added provider dropdown to the editor meta box.</li></ul>"
+  }
+}
