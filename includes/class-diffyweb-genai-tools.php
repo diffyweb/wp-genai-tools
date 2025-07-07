@@ -213,13 +213,17 @@ final class Diffyweb_GenAI_Tools {
     public function render_meta_box_content( $post ) {
         wp_nonce_field( 'diffyweb_genai_generate_image_nonce', 'diffyweb_genai_nonce' );
         ?>
-        <p><strong>Featured Image Generator</strong></p>
-        <label for="diffyweb-genai-provider-select">Provider:</label>
-        <select id="diffyweb-genai-provider-select" style="width: 100%;">
-            <option value="gemini">Google Gemini</option>
-            <option value="openai">OpenAI DALL-E 3</option>
-        </select>
-        <button type="button" class="button button-primary" id="diffyweb-genai-generate-button" style="margin-top:10px; width: 100%;">Generate Image</button>
+        <p><strong><?php esc_html_e( 'Featured Image Generator', 'diffyweb-genai-tools' ); ?></strong></p>
+        <p>
+            <label for="diffyweb-genai-provider-select" style="display: block; margin-bottom: 0.5em;"><?php esc_html_e( 'Provider:', 'diffyweb-genai-tools' ); ?></label>
+            <select id="diffyweb-genai-provider-select" name="diffyweb_genai_provider_select">
+                <option value="gemini"><?php esc_html_e( 'Google Gemini', 'diffyweb-genai-tools' ); ?></option>
+                <option value="openai"><?php esc_html_e( 'OpenAI DALL-E 3', 'diffyweb-genai-tools' ); ?></option>
+            </select>
+        </p>
+        <p>
+            <button type="button" class="button button-primary button-large" id="diffyweb-genai-generate-button"><?php esc_html_e( 'Generate Image', 'diffyweb-genai-tools' ); ?></button>
+        </p>
         <div id="diffyweb-genai-status-message" style="margin-top:10px; font-weight:bold;"></div>
 
         <script type="text/javascript">
@@ -228,7 +232,7 @@ final class Diffyweb_GenAI_Tools {
                 var button = $(this);
                 var statusDiv = $('#diffyweb-genai-status-message');
                 button.prop('disabled', true);
-                statusDiv.css('color', '#555').text('Generating, please wait...');
+                statusDiv.css('color', '#555').text('<?php echo esc_js( __( 'Generating, please wait...', 'diffyweb-genai-tools' ) ); ?>');
  
                 $.post(ajaxurl, {
                     'action': 'diffyweb_genai_generate_image',
@@ -245,7 +249,7 @@ final class Diffyweb_GenAI_Tools {
                             wp.media.featuredImage.set(newAttachmentId);
                         }
                     } else {
-                        statusDiv.css('color', 'red').text('Error: ' + response.data.message);
+                        statusDiv.css('color', 'red').text('<?php echo esc_js( __( 'Error:', 'diffyweb-genai-tools' ) ); ?> ' + response.data.message);
                     }
                     button.prop('disabled', false);
                 });
