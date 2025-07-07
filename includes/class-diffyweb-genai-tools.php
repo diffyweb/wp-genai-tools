@@ -8,8 +8,8 @@
  * @link       https://diffyweb.com/
  * @since      2.1.0
  *
- * @package    DiffyWeb_GenAI_Tools
- * @subpackage DiffyWeb_GenAI_Tools/includes
+ * @package    Diffyweb_GenAI_Tools
+ * @subpackage Diffyweb_GenAI_Tools/includes
  */
 
 // If this file is called directly, abort.
@@ -20,7 +20,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Main plugin class, now structured as a toolkit.
  */
-final class DiffyWeb_GenAI_Tools {
+final class Diffyweb_GenAI_Tools {
 
     private static $_instance = null;
     public $version = '2.7.2';
@@ -77,7 +77,7 @@ final class DiffyWeb_GenAI_Tools {
         $update_url = 'https://raw.githubusercontent.com/diffyweb/wp-genai-tools/main/info.json';
         
         // The updater class is now included from the main plugin file.
-        new DiffyWeb_GenAI_Tools_Updater( DIFFYWEB_GENAI_TOOLS_FILE, $update_url );
+        new Diffyweb_GenAI_Tools_Updater( DIFFYWEB_GENAI_TOOLS_FILE, $update_url );
     }
 
     /**
@@ -274,13 +274,13 @@ final class DiffyWeb_GenAI_Tools {
         $provider = null;
         if ( 'gemini' === $provider_slug ) {
             $api_key  = is_multisite() ? get_site_option( 'diffyweb_genai_tools_gemini_api_key' ) : get_option( 'diffyweb_genai_tools_gemini_api_key' );
-            $provider = new DiffyWeb_GenAI_Gemini_Provider( $api_key );
+            $provider = new Diffyweb_GenAI_Gemini_Provider( $api_key );
         } elseif ( 'openai' === $provider_slug ) {
             $api_key  = is_multisite() ? get_site_option( 'diffyweb_genai_tools_openai_api_key' ) : get_option( 'diffyweb_genai_tools_openai_api_key' );
-            $provider = new DiffyWeb_GenAI_OpenAI_Provider( $api_key );
+            $provider = new Diffyweb_GenAI_OpenAI_Provider( $api_key );
         }
 
-        if ( ! $provider instanceof DiffyWeb_GenAI_Provider_Interface ) {
+        if ( ! $provider instanceof Diffyweb_GenAI_Provider_Interface ) {
             wp_send_json_error( array( 'message' => 'Invalid provider selected.' ) );
             return;
         }

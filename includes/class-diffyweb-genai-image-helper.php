@@ -5,8 +5,8 @@
  * @link       https://diffyweb.com/
  * @since      2.7.0
  *
- * @package    DiffyWeb_GenAI_Tools
- * @subpackage DiffyWeb_GenAI_Tools/includes
+ * @package    Diffyweb_GenAI_Tools
+ * @subpackage Diffyweb_GenAI_Tools/includes
  */
 
 // If this file is called directly, abort.
@@ -14,7 +14,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-class DiffyWeb_GenAI_Image_Helper {
+class Diffyweb_GenAI_Image_Helper {
 
 	/**
 	 * Uploads a base64 encoded image to the media library and sets it as the featured image.

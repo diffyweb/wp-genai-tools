@@ -5,8 +5,8 @@
  * @link       https://diffyweb.com/
  * @since      2.1.0
  *
- * @package    DiffyWeb_GenAI_Tools
- * @subpackage DiffyWeb_GenAI_Tools/includes
+ * @package    Diffyweb_GenAI_Tools
+ * @subpackage Diffyweb_GenAI_Tools/includes
  */
 
 // If this file is called directly, abort.
@@ -17,7 +17,7 @@ if ( ! defined( 'WPINC' ) ) {
 /**
  * Self-hosted plugin updater class.
  */
-class DiffyWeb_GenAI_Tools_Updater {
+class Diffyweb_GenAI_Tools_Updater {
     private $file;
     private $plugin_data;
     private $update_url;

@@ -64,6 +64,6 @@ require_once plugin_dir_path( __FILE__ ) . 'includes/providers/class-diffyweb-ge
  * @since 2.1.0
  */
 function diffyweb_run_wp_genai_tools() {
-    return DiffyWeb_GenAI_Tools::instance();
+    return Diffyweb_GenAI_Tools::instance();
 }
 add_action( 'init', 'diffyweb_run_wp_genai_tools' );

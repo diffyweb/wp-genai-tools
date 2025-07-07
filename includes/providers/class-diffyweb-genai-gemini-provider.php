@@ -5,8 +5,8 @@
  * @link       https://diffyweb.com/
  * @since      2.7.0
  *
- * @package    DiffyWeb_GenAI_Tools
- * @subpackage DiffyWeb_GenAI_Tools/includes/providers
+ * @package    Diffyweb_GenAI_Tools
+ * @subpackage Diffyweb_GenAI_Tools/includes/providers
  */
 
 // If this file is called directly, abort.
@@ -14,7 +14,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-class DiffyWeb_GenAI_Gemini_Provider implements DiffyWeb_GenAI_Provider_Interface {
+class Diffyweb_GenAI_Gemini_Provider implements Diffyweb_GenAI_Provider_Interface {
 
 	/**
 	 * The API key for the provider.
@@ -111,6 +111,6 @@ class DiffyWeb_GenAI_Gemini_Provider implements DiffyWeb_GenAI_Provider_Interfac
 			);
 		}
 
-		return DiffyWeb_GenAI_Image_Helper::upload_and_set_featured_image( $base64_image_data, $post_id, $post_title );
+		return Diffyweb_GenAI_Image_Helper::upload_and_set_featured_image( $base64_image_data, $post_id, $post_title );
 	}
 }

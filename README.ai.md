@@ -56,8 +56,8 @@
 - **Objective:** Implement the OpenAI provider and improve the code architecture for better maintainability.
 - **Refactoring:**
   - **Problem:** All provider logic was mixed in the main plugin class.
-  - **Solution:** The code was refactored to be more modular. A new `includes/providers` directory was created. An `Image_Helper` class was created for shared upload logic. `DiffyWeb_GenAI_Gemini_Provider` and `DiffyWeb_GenAI_OpenAI_Provider` classes were created to encapsulate all API-specific logic, implementing a common `DiffyWeb_GenAI_Provider_Interface`.
-- **DALL-E 3 Implementation:** The "OpenAI (DALL-E)" option was enabled, and the `DiffyWeb_GenAI_OpenAI_Provider` class was implemented to handle API requests to the `dall-e-3` model.
+  - **Solution:** The code was refactored to be more modular. A new `includes/providers` directory was created. An `Image_Helper` class was created for shared upload logic. `Diffyweb_GenAI_Gemini_Provider` and `Diffyweb_GenAI_OpenAI_Provider` classes were created to encapsulate all API-specific logic, implementing a common `Diffyweb_GenAI_Provider_Interface`.
+- **DALL-E 3 Implementation:** The "OpenAI (DALL-E)" option was enabled, and the `Diffyweb_GenAI_OpenAI_Provider` class was implemented to handle API requests to the `dall-e-3` model.
 - **Accessibility:** Added functionality to automatically set the `alt` text for the generated featured image using the format: `<Post Title> featured image.`.
 
 -----
