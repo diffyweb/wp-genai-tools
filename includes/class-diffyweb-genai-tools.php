@@ -183,17 +183,31 @@ final class Diffyweb_GenAI_Tools {
     public function register_settings() {
         // Gemini Settings.
         register_setting( 'diffyweb_genai_tools_gemini_options', 'diffyweb_genai_tools_gemini_api_key', 'sanitize_text_field' );
+        register_setting( 'diffyweb_genai_tools_gemini_options', 'diffyweb_genai_tools_gemini_prompt', 'wp_kses_post' );
+
         add_settings_section( 'diffyweb_genai_gemini_api_section', 'Google Gemini API Settings', null, 'diffyweb-genai-tools-gemini' );
         add_settings_field( 'diffyweb_genai_gemini_api_key_field', 'Gemini API Key', [ $this, 'render_api_key_field' ], 'diffyweb-genai-tools-gemini', 'diffyweb_genai_gemini_api_section', [ 'id' => 'diffyweb_genai_tools_gemini_api_key' ] );
+        add_settings_field( 'diffyweb_genai_gemini_prompt_field', 'Prompt Template', [ $this, 'render_prompt_field' ], 'diffyweb-genai-tools-gemini', 'diffyweb_genai_gemini_api_section', [
+            'id'      => 'diffyweb_genai_tools_gemini_prompt',
+            'default' => "Task: Generate a single photorealistic image. Do not return text. The image should be a high-quality featured image for a blog post, visually compelling and relevant to the content. Do not include any text, logos, or watermarks in the image.\n\nPOST TITLE: {{post_title}}\n\nKEYWORDS: {{keywords_string}}\n\nCONTENT SUMMARY: {{post_content_summary}}",
+        ] );
 
         // OpenAI Settings.
         register_setting( 'diffyweb_genai_tools_openai_options', 'diffyweb_genai_tools_openai_api_key', 'sanitize_text_field' );
+        register_setting( 'diffyweb_genai_tools_openai_options', 'diffyweb_genai_tools_openai_prompt', 'wp_kses_post' );
+        register_setting( 'diffyweb_genai_tools_openai_options', 'diffyweb_genai_tools_openai_size', 'sanitize_text_field' );
+
         add_settings_section( 'diffyweb_genai_openai_api_section', 'OpenAI API Settings', null, 'diffyweb-genai-tools-openai' );
         add_settings_field( 'diffyweb_genai_openai_api_key_field', 'OpenAI API Key', [ $this, 'render_api_key_field' ], 'diffyweb-genai-tools-openai', 'diffyweb_genai_openai_api_section', [ 'id' => 'diffyweb_genai_tools_openai_api_key' ] );
+        add_settings_field( 'diffyweb_genai_openai_prompt_field', 'Prompt Template', [ $this, 'render_prompt_field' ], 'diffyweb-genai-tools-openai', 'diffyweb_genai_openai_api_section', [
+            'id'      => 'diffyweb_genai_tools_openai_prompt',
+            'default' => "Generate a single, photorealistic, high-quality featured image for a blog post. The image must be visually compelling, relevant to the content, and contain no text, logos, or watermarks. The style should be suitable for a professional blog.\n\nPOST TITLE: {{post_title}}\n\nKEYWORDS: {{keywords_string}}\n\nCONTENT SUMMARY: {{post_content_summary}}",
+        ] );
+        add_settings_field( 'diffyweb_genai_openai_size_field', 'Image Size', [ $this, 'render_openai_size_field' ], 'diffyweb-genai-tools-openai', 'diffyweb_genai_openai_api_section' );
     }
 
     public function render_api_key_field( $args ) {
-        $api_key = get_option( $args['id'] );
+        $api_key = is_multisite() ? get_site_option( $args['id'] ) : get_option( $args['id'] );
         echo '<input type="password" name="' . esc_attr( $args['id'] ) . '" value="' . esc_attr( $api_key ) . '" size="50">';
     }
 
@@ -206,6 +220,39 @@ final class Diffyweb_GenAI_Tools {
         </div>
         <?php
     }
+
+    public function render_prompt_field( $args ) {
+        $value = is_multisite() ? get_site_option( $args['id'] ) : get_option( $args['id'] );
+        if ( empty( $value ) ) {
+            $value = $args['default'];
+        }
+        ?>
+        <textarea name="<?php echo esc_attr( $args['id'] ); ?>" rows="8" cols="70" class="large-text"><?php echo esc_textarea( $value ); ?></textarea>
+        <p class="description">
+            <?php esc_html_e( 'Customize the prompt sent to the AI. Available placeholders:', 'diffyweb-genai-tools' ); ?>
+            <code>{{post_title}}</code>, <code>{{keywords_string}}</code>, <code>{{post_content_summary}}</code>
+        </p>
+        <?php
+    }
+
+    public function render_openai_size_field() {
+        $value   = is_multisite() ? get_site_option( 'diffyweb_genai_tools_openai_size' ) : get_option( 'diffyweb_genai_tools_openai_size' );
+        $value   = $value ? $value : '1024x1024';
+        $options = [
+            '1024x1024' => '1024x1024 (Square)',
+            '1792x1024' => '1792x1024 (Widescreen)',
+            '1024x1792' => '1024x1792 (Portrait)',
+        ];
+        ?>
+        <select name="diffyweb_genai_tools_openai_size">
+            <?php foreach ( $options as $size => $label ) : ?>
+                <option value="<?php echo esc_attr( $size ); ?>" <?php selected( $value, $size ); ?>><?php echo esc_html( $label ); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <p class="description"><?php esc_html_e( 'Select the dimensions for the generated image. Applies to DALL-E 3.', 'diffyweb-genai-tools' ); ?></p>
+        <?php
+    }
+
     public function add_generation_meta_box() {
         add_meta_box( 'diffyweb_genai_tools_meta_box', 'GenAI Tools', [ $this, 'render_meta_box_content' ], 'post', 'side', 'high' );
     }

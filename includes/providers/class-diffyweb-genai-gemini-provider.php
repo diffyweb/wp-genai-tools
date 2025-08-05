@@ -55,8 +55,18 @@ class Diffyweb_GenAI_Gemini_Provider implements Diffyweb_GenAI_Provider_Interfac
 			}
 		}
 		$keywords_string = implode( ', ', $keywords );
+		$content_summary = substr( $post_content, 0, 1000 ) . '...';
 
-		$prompt = "Task: Generate a single photorealistic image. Do not return text. The image should be a high-quality featured image for a blog post, visually compelling and relevant to the content. Do not include any text, logos, or watermarks in the image.\n\nPOST TITLE: {$post_title}\n\nKEYWORDS: {$keywords_string}\n\nCONTENT SUMMARY: " . substr( $post_content, 0, 1000 ) . '...';
+		$default_prompt  = "Task: Generate a single photorealistic image. Do not return text. The image should be a high-quality featured image for a blog post, visually compelling and relevant to the content. Do not include any text, logos, or watermarks in the image.\n\nPOST TITLE: {{post_title}}\n\nKEYWORDS: {{keywords_string}}\n\nCONTENT SUMMARY: {{post_content_summary}}";
+		$prompt_template = is_multisite() ? get_site_option( 'diffyweb_genai_tools_gemini_prompt', $default_prompt ) : get_option( 'diffyweb_genai_tools_gemini_prompt', $default_prompt );
+
+		$placeholders = [
+			'{{post_title}}'           => $post_title,
+			'{{keywords_string}}'      => $keywords_string,
+			'{{post_content_summary}}' => $content_summary,
+		];
+
+		$prompt = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $prompt_template );
 
 		$api_url      = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=' . $this->api_key;
 		$request_body = array(

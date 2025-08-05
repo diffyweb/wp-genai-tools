@@ -55,15 +55,27 @@ class Diffyweb_GenAI_OpenAI_Provider implements Diffyweb_GenAI_Provider_Interfac
 			}
 		}
 		$keywords_string = implode( ', ', $keywords );
+		$content_summary = substr( $post_content, 0, 1000 ) . '...';
 
-		$prompt = "Generate a single, photorealistic, high-quality featured image for a blog post. The image must be visually compelling, relevant to the content, and contain no text, logos, or watermarks. The style should be suitable for a professional blog.\n\nPOST TITLE: {$post_title}\n\nKEYWORDS: {$keywords_string}\n\nCONTENT SUMMARY: " . substr( $post_content, 0, 1000 ) . '...';
+		$default_prompt  = "Generate a single, photorealistic, high-quality featured image for a blog post. The image must be visually compelling, relevant to the content, and contain no text, logos, or watermarks. The style should be suitable for a professional blog.\n\nPOST TITLE: {{post_title}}\n\nKEYWORDS: {{keywords_string}}\n\nCONTENT SUMMARY: {{post_content_summary}}";
+		$prompt_template = is_multisite() ? get_site_option( 'diffyweb_genai_tools_openai_prompt', $default_prompt ) : get_option( 'diffyweb_genai_tools_openai_prompt', $default_prompt );
+
+		$placeholders = [
+			'{{post_title}}'           => $post_title,
+			'{{keywords_string}}'      => $keywords_string,
+			'{{post_content_summary}}' => $content_summary,
+		];
+
+		$prompt = str_replace( array_keys( $placeholders ), array_values( $placeholders ), $prompt_template );
+
+		$image_size = is_multisite() ? get_site_option( 'diffyweb_genai_tools_openai_size', '1024x1024' ) : get_option( 'diffyweb_genai_tools_openai_size', '1024x1024' );
 
 		$api_url      = 'https://api.openai.com/v1/images/generations';
 		$request_body = array(
 			'model'           => 'dall-e-3',
 			'prompt'          => $prompt,
 			'n'               => 1,
-			'size'            => '1024x1024',
+			'size'            => $image_size,
 			'response_format' => 'b64_json',
 		);
 
