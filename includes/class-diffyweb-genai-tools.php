@@ -254,7 +254,7 @@ final class Diffyweb_GenAI_Tools {
     }
 
     public function add_generation_meta_box() {
-        add_meta_box( 'diffyweb_genai_tools_meta_box', 'GenAI Tools', [ $this, 'render_meta_box_content' ], 'post', 'side', 'high' );
+        add_meta_box( 'diffyweb_genai_tools_meta_box', 'GenAI Tools', [ $this, 'render_meta_box_content' ], [ 'post', 'page' ], 'side', 'high' );
     }
 
     public function render_meta_box_content( $post ) {
